@@ -44,6 +44,8 @@ void *comportamiento_automovil(void *arg) {
 
         Puente* miPuente = &puente;
         if(carrosEnPuente>0){miPuente->estado=true;}
+        if(carrosEnPuente==0){miPuente->estado=false;}//habilito el puente
+
         //|| automovil->estado=='o'&& carrosOaE>1 && carrosEaO==0 || automovil->estado =='e'&& carrosEaO>1 && carrosOaE==0
         if(!miPuente->estado ){ //hay que implementar para que si los carros NO van en el mismo sentido se bloquee
             //ademas lo del carro puede ir en otro sitio ya que como ya cruzo el hilo podria ya ser eliminado o tal vez dependiente si el carro puede regresar???
@@ -76,6 +78,8 @@ void *comportamiento_automovil(void *arg) {
                 //cont = false;
             //}//si ya cruzo bye bye
 
+        }else{
+            printf("PUENTE OCUPADO ME REGRESO A ESPERAR \n\n");
         }
 
 
@@ -119,6 +123,7 @@ int main() {
 
     // Esperar a que todos los hilos terminen
     for (int i = 0; i < N; i++) {
+        printf("HACIENDO JOIN A EL HILO %d \n\n", i);
         pthread_join(threads[i], NULL);
     }
 
