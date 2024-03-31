@@ -47,7 +47,7 @@ void *comportamiento_automovil(void *arg) {
         if(carrosEnPuente==0){miPuente->estado=false;}//habilito el puente
 
         //|| automovil->estado=='o'&& carrosOaE>1 && carrosEaO==0 || automovil->estado =='e'&& carrosEaO>1 && carrosOaE==0
-        if(!miPuente->estado ){ //hay que implementar para que si los carros NO van en el mismo sentido se bloquee
+        if(!miPuente->estado || automovil->sentido=='o'&& carrosOaE>1 && carrosEaO==0 || automovil->estado =='e'&& carrosEaO>1 && carrosOaE==0){ //hay que implementar para que si los carros NO van en el mismo sentido se bloquee
             //ademas lo del carro puede ir en otro sitio ya que como ya cruzo el hilo podria ya ser eliminado o tal vez dependiente si el carro puede regresar???
             printf("El valor del booleano es: %s, ID del carro: %d\n", miPuente->estado ? "ocupado" : "libre",automovil->id, "\n");
             printf("carros en puente: %d, ID del carro: %d\n\n", carrosEnPuente , automovil->id );
@@ -61,12 +61,14 @@ void *comportamiento_automovil(void *arg) {
                 pthread_mutex_unlock(&mutex);
                 sleep(rand() % 5); // Simula el tiempo entre llegadas de automóviles
                 cruzar_puente(automovil);
-                pthread_mutex_lock(&mutex);
+
 
                 printf("2: carros en puente: %d, ID del carro: %d\n \n", carrosEnPuente, automovil->id );
                 printf("2: carros en puente de este a oeste: %d , ID del carro: %d\n\n", carrosEaO, automovil->id );
                 printf("2: carros en puente de oeste a este: %d, ID del carro: %d\n\n", carrosOaE, automovil->id );
                 printf("2: El valor del booleano es: %s, ID del carro: %d\n", miPuente->estado ? "ocupado" : "libre",  automovil->id, "\n");
+
+                pthread_mutex_lock(&mutex);
                 carrosEnPuente--;
                 if(automovil->sentido=='o'){carrosOaE--;}
                 if(automovil->sentido=='e'){carrosEaO--;}
@@ -79,7 +81,7 @@ void *comportamiento_automovil(void *arg) {
             //}//si ya cruzo bye bye
 
         }else{
-            printf("PUENTE OCUPADO ME REGRESO A ESPERAR \n\n");
+            //printf("PUENTE OCUPADO ME REGRESO A ESPERAR \n\n");
         }
 
 
@@ -91,7 +93,7 @@ void *comportamiento_automovil(void *arg) {
 
 
     }
-    printf("\t\tSaliendo de metodo");
+    printf("\t\t\t\t\t\tSaliendo de metodo\n\n");
     return NULL;
 }
 
