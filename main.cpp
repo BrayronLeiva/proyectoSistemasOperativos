@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include "Semaforo.h"
+//#define NPROCS 3
 
 #define N 5 // Número de automóviles
 pthread_mutex_t mutex; //mutex para manejar acceso de puente
@@ -10,6 +13,9 @@ int carrosEnPuente = 0;
 int carrosOaE = 0;
 int carrosEaO = 0;
 
+//int semExMut; // ID del semaforo
+
+//int proceso(int);
 
 // Estructura para representar el puente
 struct Puente{
@@ -130,5 +136,37 @@ int main() {
     }
 
     pthread_mutex_destroy(&mutex);
+
+    /*
+    int i, p, status;
+
+    srand(getpid());
+    semExMut = createSem(0x1234, 1); // Se crea un semaforo.
+
+    for(int i=0;i<NPROCS;i++){
+        p = fork();
+        if(p==0) proceso(i);
+    }
+
+    for(int i=0;i<NPROCS;i++) wait(&status);
+
+    eraseSem(semExMut); // Eliminar los semaforos del SO
+    */
     return 0;
 }
+
+/*int proceso(int n){
+    int i;
+
+    for(i=0;i<10;i++){
+        sleep(rand()%3);
+        semWait(semExMut); // Entrada a la seccion critica
+        printf("Proceso %d entra a la seccion critica -", n);
+        fflush(stdout);
+        sleep(rand()%3);
+        printf("Proceso %d sale a la seccion critica \n", n);
+        semSignal(semExMut); // Libera la seccion critica
+    }
+
+    exit(0);
+}*/
