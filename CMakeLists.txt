@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
-project(proyectoSO)
+project(proyecto C)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 17)
 
-add_executable(proyectoSO main.cpp
-        Semaforo.h)
+add_executable(proyecto main.c)
