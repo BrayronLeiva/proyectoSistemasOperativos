@@ -2,9 +2,13 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <sys/wait.h>
-#include "Semaforo.h"
-//#define NPROCS 3
+
+#define MAX_CARS 5
+#define BRIDGE_CAPACITY 1 // Solo un automovil puede cruzar el puente a la vez (Malcolm)
+
+pthread_mutex_t bridge_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t bridge_capacity = PTHREAD_COND_INITIALIZER;
+int num_cars_on_bridge = 0; // Variable que nos permite saber el numero carros en el puente (Malcolm)
 
 #define N 5 // Número de automóviles
 pthread_mutex_t mutex; //mutex para manejar acceso de puente
@@ -12,10 +16,6 @@ pthread_mutex_t mutex; //mutex para manejar acceso de puente
 int carrosEnPuente = 0;
 int carrosOaE = 0;
 int carrosEaO = 0;
-
-//int semExMut; // ID del semaforo
-
-//int proceso(int);
 
 // Estructura para representar el puente
 struct Puente{
@@ -29,9 +29,12 @@ Puente puente; //aca declaro mi puente
 struct Automovil {
     int id;
     char sentido; // o 'hacia oeste', e hacia 'este'
+    int velocidad;
     bool estado; //espera, cruzando, finalizado
     // Definir otras variables necesarias
 };
+
+void *cross_bridge(void *);
 
 // Función para que un automóvil cruce el puente
 void cruzar_puente(Automovil *automovil) {
@@ -104,7 +107,7 @@ void *comportamiento_automovil(void *arg) {
 }
 
 int main() {
-    pthread_t threads[N];
+    /*pthread_t threads[N];
     puente.estado = false; //comienza vacio
 
     pthread_mutex_init(&mutex, NULL);
@@ -135,38 +138,50 @@ int main() {
         pthread_join(threads[i], NULL);
     }
 
-    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&mutex);*/
 
-    /*
-    int i, p, status;
+    pthread_t threads[MAX_CARS];
+    struct Automovil cars[MAX_CARS] = {
+            {1, 'o', 100000, false},  // Auto 1 esta cruzando en 100000 microsegundos
+            {2, 'o',200000, false},  // Auto 2 esta cruzando en 200000 microsegundos
+            {3, 'o',150000, false},  // Auto 3 esta cruzando en 150000 microsegundos
+            {4, 'o',300000, false},  // Auto 4 esta cruzando en 300000 microsegundos
+            {5, 'o',250000, false}   // Auto 5 esta cruzando en 250000 microsegundos
+    };
 
-    srand(getpid());
-    semExMut = createSem(0x1234, 1); // Se crea un semaforo.
-
-    for(int i=0;i<NPROCS;i++){
-        p = fork();
-        if(p==0) proceso(i);
+    // Create threads for each car
+    for (int i = 0; i < MAX_CARS; i++) {
+        pthread_create(&threads[i], NULL, cross_bridge, (void *)&cars[i]);
     }
 
-    for(int i=0;i<NPROCS;i++) wait(&status);
-
-    eraseSem(semExMut); // Eliminar los semaforos del SO
-    */
+    // Wait for all threads to finish
+    for (int i = 0; i < MAX_CARS; i++) {
+        pthread_join(threads[i], NULL);
+    }
     return 0;
 }
 
-/*int proceso(int n){
-    int i;
+void *cross_bridge(void *car_ptr) {
+    struct Automovil *car = (struct Automovil *)car_ptr;
 
-    for(i=0;i<10;i++){
-        sleep(rand()%3);
-        semWait(semExMut); // Entrada a la seccion critica
-        printf("Proceso %d entra a la seccion critica -", n);
-        fflush(stdout);
-        sleep(rand()%3);
-        printf("Proceso %d sale a la seccion critica \n", n);
-        semSignal(semExMut); // Libera la seccion critica
+    // Los autos esperaran hasta que el puente este libre (Malcolm)
+    pthread_mutex_lock(&bridge_mutex);
+    while (num_cars_on_bridge >= BRIDGE_CAPACITY) {
+        pthread_cond_wait(&bridge_capacity, &bridge_mutex);
     }
+    num_cars_on_bridge++;
 
-    exit(0);
-}*/
+    // El auto cruza el puente (Malcolm)
+    printf("Auto %d esta cruzando el puente...\n", car->id);
+    pthread_mutex_unlock(&bridge_mutex);
+    usleep(car->velocidad); // Simula la velocidad de cada auto
+    pthread_mutex_lock(&bridge_mutex);
+
+    // El puente queda libre para el siguiente auto
+    printf("Auto %d ha cruzado el puente.\n", car->id);
+    num_cars_on_bridge--;
+    pthread_cond_signal(&bridge_capacity);
+    pthread_mutex_unlock(&bridge_mutex);
+
+    pthread_exit(NULL);
+}
