@@ -40,24 +40,25 @@ void *comportamiento_automovil(void *arg) {
     Automovil *automovil = (Automovil *)arg; //agarra de args su estructura de datos que es como su entidad
     pthread_t id_hilo = pthread_self(); // Obtener el identificador del hilo
     bool cont = true;
+    Puente* miPuente = &puente;
     while (cont) {
 
-        Puente* miPuente = &puente;
-        if(carrosEnPuente>0){miPuente->estado=true;}
+        pthread_mutex_lock(&mutex);
+        if(carrosEnPuente>0){miPuente->estado=true;}//puente ocupado
         if(carrosEnPuente==0){miPuente->estado=false;}//habilito el puente
 
         //|| automovil->estado=='o'&& carrosOaE>1 && carrosEaO==0 || automovil->estado =='e'&& carrosEaO>1 && carrosOaE==0
-        if(!miPuente->estado || automovil->sentido=='o'&& carrosOaE>1 && carrosEaO==0 || automovil->estado =='e'&& carrosEaO>1 && carrosOaE==0){ //hay que implementar para que si los carros NO van en el mismo sentido se bloquee
+        if(!miPuente->estado || automovil->sentido=='o'&& carrosOaE>=1 && carrosEaO==0 || automovil->sentido =='e' && carrosEaO>=1 && carrosOaE==0){ //hay que implementar para que si los carros NO van en el mismo sentido se bloquee
             //ademas lo del carro puede ir en otro sitio ya que como ya cruzo el hilo podria ya ser eliminado o tal vez dependiente si el carro puede regresar???
             printf("El valor del booleano es: %s, ID del carro: %d\n", miPuente->estado ? "ocupado" : "libre",automovil->id, "\n");
             printf("carros en puente: %d, ID del carro: %d\n\n", carrosEnPuente , automovil->id );
             printf("carros en puente de este a oeste: %d, ID del carro: %d\n\n", carrosEaO , automovil->id );
             printf("carros en puente de oeste a este: %d , ID del carro: %d\n\n", carrosOaE , automovil->id );
             if(!automovil->estado) {
-                pthread_mutex_lock(&mutex);
+
                 carrosEnPuente++;
-                if(automovil->sentido=='o'){carrosOaE++;}
-                if(automovil->sentido=='e'){carrosEaO++;}
+                if(automovil->sentido=='o'){carrosOaE++;} //viene del oeste va hacia el este
+                if(automovil->sentido=='e'){carrosEaO++;} //viene del este va hacia el oeste
                 pthread_mutex_unlock(&mutex);
                 sleep(rand() % 5); // Simula el tiempo entre llegadas de automóviles
                 cruzar_puente(automovil);
@@ -80,19 +81,14 @@ void *comportamiento_automovil(void *arg) {
                 //cont = false;
             //}//si ya cruzo bye bye
 
-        }else{
-            //printf("PUENTE OCUPADO ME REGRESO A ESPERAR \n\n");
-        }
-
-
+        }else{}
+        pthread_mutex_unlock(&mutex);
 
         //if(carrosEnPuente==0){
             //if(flag=='o'){flag='e';}
-            //if(flag=='e'){flag='o';}
-        //}
+            //if(flag=='e'){flag='o';}//}
 
-
-    }
+    }//while
     printf("\t\t\t\t\t\tSaliendo de metodo\n\n");
     return NULL;
 }
@@ -114,6 +110,9 @@ int main() {
         if(rand() % 2 == 0){
             automovil->sentido = 'e';
         }else{automovil->sentido = 'o';}
+
+        printf("=============================CARRO SENTIDO : %c, ID del carro: %d\n\n", automovil->sentido , automovil->id );
+
 
         //if (!ejecutado) {
             //para decir el primero que llega al puente
